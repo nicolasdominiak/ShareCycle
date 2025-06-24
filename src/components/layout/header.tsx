@@ -11,6 +11,7 @@ import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMe
 import { ThemeToggle } from '@/components/ui/theme-toggle'
 import { cn } from '@/lib/utils'
 import { User } from '@supabase/supabase-js'
+import { signOut } from '@/lib/auth/actions'
 
 interface HeaderProps {
   user?: User | null
@@ -142,8 +143,12 @@ export function Header({ user }: HeaderProps) {
                   <DropdownMenuItem asChild>
                     <Link href="/settings">Configurações</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    Sair
+                  <DropdownMenuItem asChild>
+                    <form action={signOut}>
+                      <button type="submit" className="w-full text-left">
+                        Sair
+                      </button>
+                    </form>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

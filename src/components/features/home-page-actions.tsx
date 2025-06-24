@@ -3,12 +3,15 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { User } from '@supabase/supabase-js'
+import { useUser } from '@/hooks/use-user'
 
 interface HomePageActionsProps {
-  user: User | null
+  user?: User | null
 }
 
-export function HomePageActions({ user }: HomePageActionsProps) {
+export function HomePageActions({ user: propUser }: HomePageActionsProps) {
+  const { user: hookUser } = useUser()
+  const user = propUser ?? hookUser
   if (user) {
     // Se o usuário está logado, redireciona para as funcionalidades principais
     return (

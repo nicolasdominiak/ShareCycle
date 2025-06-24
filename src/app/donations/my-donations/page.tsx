@@ -43,8 +43,7 @@ export default function MyDonationsPage() {
   }
 
   const handleView = (id: string) => {
-    // TODO: Implementar navegação para detalhes
-    console.log('Ver doação:', id)
+    router.push(`/donations/${id}`)
   }
 
   const handleCloseDeleteDialog = () => {

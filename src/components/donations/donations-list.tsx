@@ -42,7 +42,7 @@ async function DonationsContent({ searchParams }: DonationsListProps) {
             {donations.length} {donations.length === 1 ? 'doação encontrada' : 'doações encontradas'}
           </span>
           {Object.keys(searchParams).length > 0 && (
-            <span className="text-blue-600 dark:text-blue-400">
+            <span className="text-primary dark:text-primary">
               Filtros aplicados
             </span>
           )}

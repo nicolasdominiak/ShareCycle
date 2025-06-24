@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Recycle, Heart, Github, Twitter, Instagram, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 const footerLinks = {
   product: [
@@ -39,6 +40,71 @@ const socialLinks = [
 ]
 
 export function Footer() {
+  const isMobile = useIsMobile()
+
+  // Versão mobile resumida e centralizada
+  if (isMobile) {
+    return (
+      <footer className="bg-muted/50 dark:bg-background border-t border-border">
+        <div className="container mx-auto px-4 py-6">
+          <div className="text-center space-y-4">
+            {/* Brand */}
+            <Link href="/" className="inline-flex items-center space-x-2">
+              <div className="p-1.5 bg-primary rounded-lg">
+                <Recycle className="h-4 w-4 text-primary-foreground" />
+              </div>
+              <span className="font-bold text-lg">
+                Share<span className="text-primary">Cycle</span>
+              </span>
+            </Link>
+
+            {/* Links essenciais */}
+            <div className="flex justify-center space-x-6 text-sm">
+              <Link href="/donations" className="text-muted-foreground hover:text-foreground">
+                Doações
+              </Link>
+              <Link href="/help" className="text-muted-foreground hover:text-foreground">
+                Ajuda
+              </Link>
+              <Link href="/contact" className="text-muted-foreground hover:text-foreground">
+                Contato
+              </Link>
+            </div>
+
+            {/* Redes sociais */}
+            <div className="flex justify-center space-x-2">
+              {socialLinks.map((social) => (
+                <Button
+                  key={social.label}
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground hover:bg-muted h-8 w-8 p-0"
+                  asChild
+                >
+                  <Link href={social.href} target="_blank" rel="noopener noreferrer">
+                    <social.icon className="h-3.5 w-3.5" />
+                    <span className="sr-only">{social.label}</span>
+                  </Link>
+                </Button>
+              ))}
+            </div>
+
+            {/* Copyright */}
+            <div className="flex flex-col items-center space-y-1 text-xs text-muted-foreground">
+              <div className="flex items-center space-x-1">
+                <span>Feito com</span>
+                <Heart className="h-3 w-3 text-red-500 fill-current" />
+                <span>para um mundo melhor</span>
+              </div>
+              <p>© 2025 ShareCycle. Todos os direitos reservados.</p>
+            </div>
+          </div>
+        </div>
+      </footer>
+    )
+  }
+
+  // Versão desktop completa
   return (
     <footer className="bg-muted/50 dark:bg-background border-t border-border">
       <div className="container mx-auto px-4 py-12">

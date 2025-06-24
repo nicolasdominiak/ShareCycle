@@ -1,8 +1,11 @@
 import { Heart, Recycle, Users } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { createClient } from '@/lib/supabase/server'
+import { HomePageActions } from '@/components/features/home-page-actions'
 
-export default function HomePage() {
+export default async function HomePage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
   return (
     <main className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
       <div className="container mx-auto px-4 py-16">
@@ -60,14 +63,7 @@ export default function HomePage() {
             </Card>
           </div>
           
-          <div className="space-y-4 sm:space-y-0 sm:space-x-4 sm:flex sm:justify-center">
-            <Button size="lg" className="w-full sm:w-auto">
-              Começar a Doar
-            </Button>
-            <Button variant="outline" size="lg" className="w-full sm:w-auto">
-              Buscar Doações
-            </Button>
-          </div>
+          <HomePageActions user={user} />
         </div>
       </div>
     </main>

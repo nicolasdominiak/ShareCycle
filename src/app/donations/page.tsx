@@ -1,9 +1,7 @@
-import { Suspense } from 'react'
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { DonationsListSkeleton } from '@/components/donations/donations-list-skeleton'
 import { DonationsList } from '@/components/donations/donations-list'
 import { DonationsFilters } from '@/components/donations/donations-filters'
 
@@ -51,9 +49,7 @@ export default async function DonationsPage({ searchParams }: DonationsPageProps
       </div>
       
       {/* Lista de doações */}
-      <Suspense fallback={<DonationsListSkeleton />}>
-        <DonationsList searchParams={params} />
-      </Suspense>
+      <DonationsList searchParams={params} />
     </div>
   )
 } 

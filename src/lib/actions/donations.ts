@@ -241,13 +241,17 @@ export async function getFilteredDonations(filters: {
   category?: string
   city?: string
   orderBy?: string
+  pageParam?: number
 }) {
   try {
     const supabase = await createClient()
     
+    const PAGE_SIZE = 12 // 12 doações por página
+    const offset = (filters.pageParam || 0) * PAGE_SIZE
+    
     let query = supabase
       .from('donations_with_donor')
-      .select('*')
+      .select('*', { count: 'exact' })
       .eq('is_active', true)
       .eq('status', 'disponível')
 
@@ -282,14 +286,28 @@ export async function getFilteredDonations(filters: {
         break
     }
 
-    const { data: donations, error } = await query
+    // Aplicar paginação
+    query = query.range(offset, offset + PAGE_SIZE - 1)
+
+    const { data: donations, error, count } = await query
 
     if (error) {
       console.error('Erro ao buscar doações filtradas:', error)
       throw new Error('Erro ao carregar doações')
     }
 
-    return donations || []
+    const totalItems = count || 0
+    const totalPages = Math.ceil(totalItems / PAGE_SIZE)
+    const hasNextPage = (filters.pageParam || 0) < totalPages - 1
+
+    return {
+      data: donations || [],
+      nextCursor: hasNextPage ? (filters.pageParam || 0) + 1 : undefined,
+      hasNextPage,
+      totalItems,
+      totalPages,
+      currentPage: filters.pageParam || 0
+    }
   } catch (error) {
     console.error('Erro na getFilteredDonations:', error)
     throw error

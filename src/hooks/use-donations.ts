@@ -1,5 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getUserDonations, getDonations, getDonationById, updateDonation, createDonation } from '@/lib/actions/donations'
+'use client'
+
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
+import { getUserDonations, getDonationById, updateDonation, createDonation, getFilteredDonations } from '@/lib/actions/donations'
 import { Tables } from '@/types/database.types'
 import type { DonationInput } from '@/lib/validations/donation'
 
@@ -18,12 +20,27 @@ export const donationKeys = {
   userDonations: () => [...donationKeys.user(), 'donations'] as const,
 }
 
+interface UseDonationsFilters {
+  search?: string
+  category?: string
+  city?: string
+  orderBy?: string
+}
+
 // Hook para buscar todas as doações
-export function useDonations() {
-  return useQuery({
-    queryKey: donationKeys.lists(),
-    queryFn: getDonations,
+export function useDonations(filters: UseDonationsFilters = {}) {
+  return useInfiniteQuery({
+    queryKey: ['donations', filters],
+    queryFn: async ({ pageParam = 0 }) => {
+      return await getFilteredDonations({
+        ...filters,
+        pageParam
+      })
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextCursor,
     staleTime: 1000 * 60 * 5, // 5 minutos
+    gcTime: 1000 * 60 * 10, // 10 minutos
   })
 }
 

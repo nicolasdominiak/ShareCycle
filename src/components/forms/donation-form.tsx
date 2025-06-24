@@ -16,8 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { ImageUpload } from '@/components/ui/image-upload'
 import { useToast } from '@/hooks/use-toast'
 import { donationSchema, categoryLabels, conditionOptions, type DonationInput } from '@/lib/validations/donation'
-import { createDonation } from '@/lib/actions/donations'
-import { useUpdateDonation, type Donation } from '@/hooks/use-donations'
+import { useCreateDonation, useUpdateDonation, type Donation } from '@/hooks/use-donations'
 
 interface DonationFormProps {
   donation?: Donation
@@ -30,6 +29,7 @@ export function DonationForm({ donation, mode = 'create' }: DonationFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const isEditMode = mode === 'edit'
   
+  const createDonationMutation = useCreateDonation()
   const updateDonationMutation = useUpdateDonation()
 
   const form = useForm<DonationInput>({
@@ -98,7 +98,7 @@ export function DonationForm({ donation, mode = 'create' }: DonationFormProps) {
           })
         }
       } else {
-        const result = await createDonation(data)
+        const result = await createDonationMutation.mutateAsync(data)
         
         if (result.success) {
           toast({
@@ -404,10 +404,10 @@ export function DonationForm({ donation, mode = 'create' }: DonationFormProps) {
               </Button>
               <Button
                 type="submit"
-                disabled={isLoading || updateDonationMutation.isPending}
+                disabled={isLoading || updateDonationMutation.isPending || createDonationMutation.isPending}
                 className="flex-1"
               >
-                {(isLoading || updateDonationMutation.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {(isLoading || updateDonationMutation.isPending || createDonationMutation.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isEditMode ? 'Atualizar Doação' : 'Cadastrar Doação'}
               </Button>
             </div>

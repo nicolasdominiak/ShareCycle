@@ -62,6 +62,7 @@ export async function createDonation(data: DonationInput) {
 
     // Revalidar cache das páginas relacionadas
     revalidatePath('/donations')
+    revalidatePath('/donations/my-donations')
     revalidatePath('/dashboard')
 
     return {

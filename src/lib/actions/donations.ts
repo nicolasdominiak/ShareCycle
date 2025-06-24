@@ -85,6 +85,134 @@ export async function createDonation(data: DonationInput) {
   }
 }
 
+export async function updateDonation(id: string, data: DonationInput) {
+  try {
+    // Validar dados no servidor
+    const validatedData = donationSchema.parse(data)
+    
+    const supabase = await createClient()
+    
+    // Verificar se o usuário está autenticado
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      return {
+        success: false,
+        error: 'Usuário não autenticado'
+      }
+    }
+
+    // Verificar se a doação existe e pertence ao usuário
+    const { data: existingDonation, error: fetchError } = await supabase
+      .from('donations')
+      .select('*')
+      .eq('id', id)
+      .eq('donor_id', user.id)
+      .single()
+
+    if (fetchError || !existingDonation) {
+      return {
+        success: false,
+        error: 'Doação não encontrada ou você não tem permissão para editá-la'
+      }
+    }
+
+    // Preparar dados para atualização
+    const updateData = {
+      title: validatedData.title,
+      description: validatedData.description,
+      category: validatedData.category,
+      quantity: validatedData.quantity,
+      condition: validatedData.condition,
+      images: validatedData.images || [],
+      pickup_address: validatedData.pickup_address,
+      pickup_city: validatedData.pickup_city,
+      pickup_state: validatedData.pickup_state,
+      pickup_zip_code: validatedData.pickup_zip_code,
+      pickup_instructions: validatedData.pickup_instructions || null,
+      expiry_date: validatedData.expiry_date || null,
+      updated_at: new Date().toISOString(),
+    }
+
+    // Atualizar doação no banco
+    const { data: donation, error } = await supabase
+      .from('donations')
+      .update(updateData)
+      .eq('id', id)
+      .eq('donor_id', user.id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Erro ao atualizar doação:', {
+        error,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      })
+      return {
+        success: false,
+        error: `Erro ao atualizar doação: ${error.message}`
+      }
+    }
+
+    // Revalidar cache das páginas relacionadas
+    revalidatePath('/donations')
+    revalidatePath('/donations/my-donations')
+    revalidatePath(`/donations/${id}`)
+
+    return {
+      success: true,
+      data: donation
+    }
+  } catch (error) {
+    console.error('Erro na action updateDonation:', error)
+    
+    if (error instanceof Error && error.name === 'ZodError') {
+      return {
+        success: false,
+        error: 'Dados inválidos fornecidos'
+      }
+    }
+    
+    return {
+      success: false,
+      error: 'Erro interno do servidor'
+    }
+  }
+}
+
+export async function getDonationById(id: string) {
+  try {
+    const supabase = await createClient()
+    
+    // Verificar se o usuário está autenticado
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      throw new Error('Usuário não autenticado')
+    }
+
+    const { data: donation, error } = await supabase
+      .from('donations')
+      .select('*')
+      .eq('id', id)
+      .eq('donor_id', user.id)
+      .single()
+
+    if (error) {
+      console.error('Erro ao buscar doação:', error)
+      throw new Error('Doação não encontrada ou você não tem permissão para acessá-la')
+    }
+
+    return donation
+  } catch (error) {
+    console.error('Erro na getDonationById:', error)
+    throw error
+  }
+}
+
 export async function getDonations() {
   try {
     const supabase = await createClient()

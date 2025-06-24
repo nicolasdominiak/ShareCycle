@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
@@ -17,11 +17,20 @@ import { ImageUpload } from '@/components/ui/image-upload'
 import { useToast } from '@/hooks/use-toast'
 import { donationSchema, categoryLabels, conditionOptions, type DonationInput } from '@/lib/validations/donation'
 import { createDonation } from '@/lib/actions/donations'
+import { useUpdateDonation, type Donation } from '@/hooks/use-donations'
 
-export function DonationForm() {
+interface DonationFormProps {
+  donation?: Donation
+  mode?: 'create' | 'edit'
+}
+
+export function DonationForm({ donation, mode = 'create' }: DonationFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const isEditMode = mode === 'edit'
+  
+  const updateDonationMutation = useUpdateDonation()
 
   const form = useForm<DonationInput>({
     resolver: zodResolver(donationSchema),
@@ -40,31 +49,75 @@ export function DonationForm() {
     },
   })
 
+  // Preencher o formulário com dados existentes quando em modo de edição
+  useEffect(() => {
+    if (isEditMode && donation) {
+      const formData = {
+        title: donation.title || '',
+        description: donation.description || '',
+        category: donation.category,
+        quantity: donation.quantity || 1,
+        condition: (donation.condition as 'novo' | 'usado_bom_estado' | 'usado_regular' | 'precisa_reparo') || 'novo',
+        images: donation.images || [],
+        pickup_address: donation.pickup_address || '',
+        pickup_city: donation.pickup_city || '',
+        pickup_state: donation.pickup_state || '',
+        pickup_zip_code: donation.pickup_zip_code || '',
+        pickup_instructions: donation.pickup_instructions || '',
+        expiry_date: donation.expiry_date || '',
+      }
+      
+      // Aguardar um tick para garantir que o componente foi renderizado
+      setTimeout(() => {
+        form.reset(formData)
+      }, 0)
+    }
+  }, [donation, isEditMode, form])
+
   const onSubmit = async (data: DonationInput) => {
     try {
       setIsLoading(true)
       
-
-      
-      const result = await createDonation(data)
-      
-      if (result.success) {
-        toast({
-          title: "Doação cadastrada com sucesso!",
-          description: "Sua doação foi publicada e está disponível para solicitações.",
+      if (isEditMode && donation) {
+        const result = await updateDonationMutation.mutateAsync({
+          id: donation.id,
+          data
         })
-        router.push('/donations')
+        
+        if (result.success) {
+          toast({
+            title: "Doação atualizada com sucesso!",
+            description: "Suas alterações foram salvas com sucesso.",
+          })
+          router.push('/donations/my-donations')
+        } else {
+          toast({
+            title: "Erro ao atualizar doação",
+            description: result.error || "Ocorreu um erro inesperado. Tente novamente.",
+            variant: "destructive",
+          })
+        }
       } else {
-        toast({
-          title: "Erro ao cadastrar doação",
-          description: result.error || "Ocorreu um erro inesperado. Tente novamente.",
-          variant: "destructive",
-        })
+        const result = await createDonation(data)
+        
+        if (result.success) {
+          toast({
+            title: "Doação cadastrada com sucesso!",
+            description: "Sua doação foi publicada e está disponível para solicitações.",
+          })
+          router.push('/donations/my-donations')
+        } else {
+          toast({
+            title: "Erro ao cadastrar doação",
+            description: result.error || "Ocorreu um erro inesperado. Tente novamente.",
+            variant: "destructive",
+          })
+        }
       }
     } catch (error) {
-      console.error('Erro ao criar doação:', error)
+      console.error('Erro ao salvar doação:', error)
       toast({
-        title: "Erro ao cadastrar doação",
+        title: isEditMode ? "Erro ao atualizar doação" : "Erro ao cadastrar doação",
         description: "Ocorreu um erro inesperado. Tente novamente.",
         variant: "destructive",
       })
@@ -85,7 +138,9 @@ export function DonationForm() {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <CardTitle>Informações da Doação</CardTitle>
+          <CardTitle>
+            {isEditMode ? 'Editar Doação' : 'Informações da Doação'}
+          </CardTitle>
         </div>
       </CardHeader>
       <CardContent>
@@ -137,7 +192,11 @@ export function DonationForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Categoria</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione uma categoria" />
@@ -184,7 +243,11 @@ export function DonationForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Condição dos Itens</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Selecione a condição" />
@@ -303,18 +366,7 @@ export function DonationForm() {
                     <FormItem>
                       <FormLabel>CEP</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="00000-000" 
-                          {...field}
-                          onChange={(e) => {
-                            // Formatar CEP automaticamente
-                            let value = e.target.value.replace(/\D/g, '')
-                            if (value.length > 5) {
-                              value = value.replace(/(\d{5})(\d{1,3})/, '$1-$2')
-                            }
-                            field.onChange(value)
-                          }}
-                        />
+                        <Input placeholder="Ex: 01234-567" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -330,7 +382,8 @@ export function DonationForm() {
                     <FormLabel>Instruções para Retirada (Opcional)</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Ex: Tocar o interfone do apartamento 101, disponível das 9h às 18h"
+                        placeholder="Ex: Portaria do prédio, apartamento 123. Melhor horário: manhã."
+                        className="min-h-[80px]"
                         {...field}
                       />
                     </FormControl>
@@ -340,7 +393,6 @@ export function DonationForm() {
               />
             </div>
 
-            {/* Botões de Ação */}
             <div className="flex gap-4 pt-6">
               <Button
                 type="button"
@@ -352,11 +404,11 @@ export function DonationForm() {
               </Button>
               <Button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || updateDonationMutation.isPending}
                 className="flex-1"
               >
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Cadastrar Doação
+                {(isLoading || updateDonationMutation.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isEditMode ? 'Atualizar Doação' : 'Cadastrar Doação'}
               </Button>
             </div>
           </form>

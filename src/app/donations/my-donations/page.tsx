@@ -1,6 +1,7 @@
 "use client"
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Plus, Package, AlertCircle, Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -11,10 +12,10 @@ import { useUserDonations } from '@/hooks/use-donations'
 
 export default function MyDonationsPage() {
   const { data: donations, isLoading, isError, error, refetch } = useUserDonations()
+  const router = useRouter()
 
   const handleEdit = (id: string) => {
-    // TODO: Implementar navegação para edição
-    console.log('Editar doação:', id)
+    router.push(`/donations/${id}/edit`)
   }
 
   const handleDelete = (id: string) => {

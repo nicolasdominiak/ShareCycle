@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getUserDonations, getDonations } from '@/lib/actions/donations'
+import { getUserDonations, getDonations, getDonationById, updateDonation } from '@/lib/actions/donations'
 import { Tables } from '@/types/database.types'
+import type { DonationInput } from '@/lib/validations/donation'
 
 // Tipos
 export type Donation = Tables<'donations'>
@@ -22,7 +23,7 @@ export function useDonations() {
   return useQuery({
     queryKey: donationKeys.lists(),
     queryFn: getDonations,
-    staleTime: 2 * 60 * 1000, // 2 minutos
+    staleTime: 1000 * 60 * 5, // 5 minutos
   })
 }
 
@@ -31,7 +32,38 @@ export function useUserDonations() {
   return useQuery({
     queryKey: donationKeys.userDonations(),
     queryFn: getUserDonations,
-    staleTime: 1 * 60 * 1000, // 1 minuto
+    staleTime: 1000 * 60 * 5, // 5 minutos
+  })
+}
+
+// Hook para buscar uma doação específica por ID
+export function useDonation(id: string) {
+  return useQuery({
+    queryKey: donationKeys.detail(id),
+    queryFn: () => getDonationById(id),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5, // 5 minutos
+  })
+}
+
+// Mutation para atualizar doação
+export function useUpdateDonation() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: DonationInput }) => 
+      updateDonation(id, data),
+    onSuccess: (result, { id }) => {
+      if (result.success) {
+        // Invalidar todas as queries relacionadas às doações
+        queryClient.invalidateQueries({ queryKey: donationKeys.all })
+        
+        // Atualizar a query específica da doação editada
+        if (result.data) {
+          queryClient.setQueryData(donationKeys.detail(id), result.data)
+        }
+      }
+    },
   })
 }
 

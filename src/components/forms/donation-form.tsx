@@ -9,10 +9,11 @@ import { Loader2, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { ImageUpload } from '@/components/ui/image-upload'
 import { useToast } from '@/hooks/use-toast'
 import { donationSchema, categoryLabels, conditionOptions, type DonationInput } from '@/lib/validations/donation'
 import { createDonation } from '@/lib/actions/donations'
@@ -28,7 +29,8 @@ export function DonationForm() {
       title: '',
       description: '',
       quantity: 1,
-      condition: '',
+      condition: 'novo',
+      images: [],
       pickup_address: '',
       pickup_city: '',
       pickup_state: '',
@@ -41,6 +43,8 @@ export function DonationForm() {
   const onSubmit = async (data: DonationInput) => {
     try {
       setIsLoading(true)
+      
+
       
       const result = await createDonation(data)
       
@@ -217,6 +221,29 @@ export function DonationForm() {
                   )}
                 />
               </div>
+            </div>
+
+            {/* Imagens da Doação */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Imagens da Doação</h3>
+              <FormField
+                control={form.control}
+                name="images"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Adicione fotos dos itens</FormLabel>
+                    <FormControl>
+                      <ImageUpload
+                        value={field.value || []}
+                        onChange={field.onChange}
+                        maxFiles={5}
+                        disabled={isLoading}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             {/* Informações de Retirada */}

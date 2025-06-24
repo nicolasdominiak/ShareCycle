@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { User } from '@supabase/supabase-js'
-import { useUser } from '@/hooks/use-user'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Heart, Search, Users, Gift } from "lucide-react"
 

@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { donationSchema, type DonationInput } from '@/lib/validations/donation'
-import { redirect } from 'next/navigation'
+
 import { revalidatePath } from 'next/cache'
 
 export async function createDonation(data: DonationInput) {
@@ -29,6 +29,7 @@ export async function createDonation(data: DonationInput) {
       category: validatedData.category,
       quantity: validatedData.quantity,
       condition: validatedData.condition,
+      images: validatedData.images || [],
       pickup_address: validatedData.pickup_address,
       pickup_city: validatedData.pickup_city,
       pickup_state: validatedData.pickup_state,
@@ -36,10 +37,6 @@ export async function createDonation(data: DonationInput) {
       pickup_instructions: validatedData.pickup_instructions || null,
       expiry_date: validatedData.expiry_date || null,
       donor_id: user.id,
-      status: 'disponível' as const,
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
     }
 
     // Inserir doação no banco
@@ -50,10 +47,16 @@ export async function createDonation(data: DonationInput) {
       .single()
 
     if (error) {
-      console.error('Erro ao criar doação:', error)
+      console.error('Erro ao criar doação:', {
+        error,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      })
       return {
         success: false,
-        error: 'Erro ao salvar doação no banco de dados'
+        error: `Erro ao salvar doação: ${error.message}`
       }
     }
 

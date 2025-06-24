@@ -33,10 +33,19 @@ export const donationSchema = z.object({
     })
     .min(1, "Quantidade deve ser pelo menos 1")
     .max(1000, "Quantidade deve ser no máximo 1000"),
-  condition: z
-    .string()
-    .min(1, "Condição do item é obrigatória")
-    .max(200, "Condição deve ter no máximo 200 caracteres"),
+  condition: z.enum([
+    "novo",
+    "usado_bom_estado", 
+    "usado_regular",
+    "precisa_reparo"
+  ], {
+    required_error: "Condição do item é obrigatória",
+    invalid_type_error: "Condição inválida"
+  }),
+  images: z
+    .array(z.string().url("URL da imagem inválida"))
+    .max(5, "Máximo 5 imagens permitidas")
+    .optional(),
   pickup_address: z
     .string()
     .min(1, "Endereço para retirada é obrigatório")
@@ -87,7 +96,7 @@ export const categoryLabels = {
 
 export const conditionOptions = [
   { value: "novo", label: "Novo" },
-  { value: "semi_novo", label: "Semi-novo" },
   { value: "usado_bom_estado", label: "Usado - Bom estado" },
-  { value: "usado_estado_regular", label: "Usado - Estado regular" }
+  { value: "usado_regular", label: "Usado - Estado regular" },
+  { value: "precisa_reparo", label: "Precisa de reparo" }
 ] as const 

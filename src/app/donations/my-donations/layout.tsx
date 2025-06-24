@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation'
-import { MainLayout } from '@/components/layout/main-layout'
 import { createClient } from '@/lib/supabase/server'
 import { Metadata } from 'next'
 
@@ -21,9 +20,5 @@ export default async function MyDonationsLayout({
     redirect('/auth/login')
   }
 
-  return (
-    <MainLayout>
-      {children}
-    </MainLayout>
-  )
+  return <>{children}</>
 } 

@@ -1,17 +1,33 @@
+import { Suspense } from 'react'
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { DonationsListSkeleton } from '@/components/donations/donations-list-skeleton'
+import { DonationsList } from '@/components/donations/donations-list'
+import { DonationsFilters } from '@/components/donations/donations-filters'
 
 export const metadata: Metadata = {
   title: 'Doações - ShareCycle',
   description: 'Encontre doações disponíveis em sua comunidade',
 }
 
-export default function DonationsPage() {
+interface DonationsPageProps {
+  searchParams: Promise<{
+    search?: string
+    category?: string
+    city?: string
+    orderBy?: string
+  }>
+}
+
+export default async function DonationsPage({ searchParams }: DonationsPageProps) {
+  const params = await searchParams
+  
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
             Doações Disponíveis
@@ -29,12 +45,15 @@ export default function DonationsPage() {
         </Button>
       </div>
       
-      {/* Lista de doações será implementada na próxima tarefa */}
-      <div className="text-center py-12">
-        <p className="text-gray-500 dark:text-gray-400">
-          Lista de doações será implementada em breve...
-        </p>
+      {/* Filtros */}
+      <div className="mb-6">
+        <DonationsFilters />
       </div>
+      
+      {/* Lista de doações */}
+      <Suspense fallback={<DonationsListSkeleton />}>
+        <DonationsList searchParams={params} />
+      </Suspense>
     </div>
   )
 } 

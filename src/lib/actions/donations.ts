@@ -236,6 +236,66 @@ export async function getDonations() {
   }
 }
 
+export async function getFilteredDonations(filters: {
+  search?: string
+  category?: string
+  city?: string
+  orderBy?: string
+}) {
+  try {
+    const supabase = await createClient()
+    
+    let query = supabase
+      .from('donations_with_donor')
+      .select('*')
+      .eq('is_active', true)
+      .eq('status', 'disponível')
+
+    // Filtro de busca por título e descrição
+    if (filters.search) {
+      query = query.or(`title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`)
+    }
+
+    // Filtro por categoria
+    if (filters.category) {
+      query = query.eq('category', filters.category)
+    }
+
+    // Filtro por cidade
+    if (filters.city) {
+      query = query.ilike('pickup_city', `%${filters.city}%`)
+    }
+
+    // Ordenação
+    switch (filters.orderBy) {
+      case 'oldest':
+        query = query.order('created_at', { ascending: true })
+        break
+      case 'title':
+        query = query.order('title', { ascending: true })
+        break
+      case 'category':
+        query = query.order('category', { ascending: true }).order('created_at', { ascending: false })
+        break
+      default: // 'newest'
+        query = query.order('created_at', { ascending: false })
+        break
+    }
+
+    const { data: donations, error } = await query
+
+    if (error) {
+      console.error('Erro ao buscar doações filtradas:', error)
+      throw new Error('Erro ao carregar doações')
+    }
+
+    return donations || []
+  } catch (error) {
+    console.error('Erro na getFilteredDonations:', error)
+    throw error
+  }
+}
+
 export async function deleteDonation(id: string) {
   try {
     const supabase = await createClient()

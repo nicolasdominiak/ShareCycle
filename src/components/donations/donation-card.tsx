@@ -1,7 +1,8 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
-import { Donation } from '@/hooks/use-donations'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Tables } from '@/types/database.types'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { 
@@ -14,13 +15,18 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  XCircle
+  XCircle,
+  User
 } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
+
+type DonationWithDonor = Tables<'donations_with_donor'>
 
 interface DonationCardProps {
-  donation: Donation
+  donation: DonationWithDonor
   showActions?: boolean
+  variant?: 'public' | 'owner'
   onEdit?: (id: string) => void
   onDelete?: (id: string) => void
   onView?: (id: string) => void
@@ -68,6 +74,7 @@ const categoryMap = {
 
 export function DonationCard({ 
   donation, 
+  variant = 'public',
   showActions = false,
   onEdit,
   onDelete,
@@ -78,7 +85,7 @@ export function DonationCard({
   const StatusIcon = statusInfo.icon
 
   const firstImage = donation.images?.[0]
-  const categoryLabel = categoryMap[donation.category] || donation.category
+  const categoryLabel = categoryMap[donation.category!] || donation.category
 
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow bg-white/40 dark:bg-[#031c14]/40 border dark:border-green-800/30">
@@ -87,7 +94,7 @@ export function DonationCard({
           {firstImage ? (
             <Image
               src={firstImage}
-              alt={donation.title}
+              alt={donation.title || 'Doação'}
               fill
               className="object-cover"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -112,14 +119,27 @@ export function DonationCard({
       </CardHeader>
 
       <CardContent className="p-4">
-        <div className="space-y-2">
+        <div className="space-y-3">
           <h3 className="font-semibold text-lg leading-tight line-clamp-2">
-            {donation.title}
+            {donation.title || 'Título não informado'}
           </h3>
           
           <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-            {donation.description}
+            {donation.description || 'Descrição não disponível'}
           </p>
+
+          {/* Informações do doador - apenas na visualização pública */}
+          {variant === 'public' && (
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <Avatar className="h-6 w-6">
+                <AvatarImage src={donation.donor_avatar || undefined} />
+                <AvatarFallback className="text-xs">
+                  <User className="h-3 w-3" />
+                </AvatarFallback>
+              </Avatar>
+              <span>{donation.donor_name || 'Doador anônimo'}</span>
+            </div>
+          )}
 
           <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
             {donation.quantity && (
@@ -146,45 +166,56 @@ export function DonationCard({
             </div>
           )}
 
-          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-            <Calendar className="h-3 w-3" />
-            <span>
-              {format(new Date(donation.created_at!), 'dd/MM/yyyy', { locale: ptBR })}
-            </span>
-          </div>
+          {donation.created_at && (
+            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+              <Calendar className="h-3 w-3" />
+              <span>
+                {format(new Date(donation.created_at), 'dd/MM/yyyy', { locale: ptBR })}
+              </span>
+            </div>
+          )}
         </div>
       </CardContent>
 
-      {showActions && (
-        <CardFooter className="p-4 pt-0 flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onView?.(donation.id)}
-            className="flex-1"
-          >
-            <Eye className="h-4 w-4 mr-2" />
-            Ver
+      <CardFooter className="p-4 pt-0">
+        {showActions ? (
+          <div className="flex gap-2 w-full">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onView?.(donation.id!)}
+              className="flex-1"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Ver
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onEdit?.(donation.id!)}
+              className="flex-1"
+            >
+              <Edit className="h-4 w-4 mr-2" />
+              Editar
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onDelete?.(donation.id!)}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <Button asChild className="w-full">
+            <Link href={`/donations/${donation.id}`} className="flex items-center gap-2">
+              <Eye className="h-4 w-4" />
+              Ver detalhes
+            </Link>
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onEdit?.(donation.id)}
-            className="flex-1"
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Editar
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onDelete?.(donation.id)}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </CardFooter>
-      )}
+        )}
+      </CardFooter>
     </Card>
   )
 } 

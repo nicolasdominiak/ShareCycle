@@ -2,30 +2,62 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Plus, Package, AlertCircle, Loader2 } from 'lucide-react'
+import { useState } from 'react'
+import { Plus, Package, AlertCircle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Skeleton } from '@/components/ui/skeleton'
 import { DonationCard } from '@/components/donations/donation-card'
+import { DeleteDonationDialog } from '@/components/donations/delete-donation-dialog'
 import { useUserDonations } from '@/hooks/use-donations'
 
 export default function MyDonationsPage() {
   const { data: donations, isLoading, isError, error, refetch } = useUserDonations()
   const router = useRouter()
+  
+  // Estado para controlar o modal de exclusão
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean
+    donationId: string
+    donationTitle: string
+  }>({
+    isOpen: false,
+    donationId: '',
+    donationTitle: ''
+  })
 
   const handleEdit = (id: string) => {
     router.push(`/donations/${id}/edit`)
   }
 
   const handleDelete = (id: string) => {
-    // TODO: Implementar exclusão
-    console.log('Excluir doação:', id)
+    const donation = donations?.find(d => d.id === id)
+    if (donation) {
+      setDeleteDialog({
+        isOpen: true,
+        donationId: id,
+        donationTitle: donation.title
+      })
+    }
   }
 
   const handleView = (id: string) => {
     // TODO: Implementar navegação para detalhes
     console.log('Ver doação:', id)
+  }
+
+  const handleCloseDeleteDialog = () => {
+    setDeleteDialog({
+      isOpen: false,
+      donationId: '',
+      donationTitle: ''
+    })
+  }
+
+  const handleDonationDeleted = () => {
+    // Atualizar a lista de doações após exclusão
+    refetch()
   }
 
   if (isLoading) {
@@ -213,6 +245,15 @@ export default function MyDonationsPage() {
           </Button>
         </div>
       )}
+
+      {/* Modal de confirmação de exclusão */}
+      <DeleteDonationDialog
+        isOpen={deleteDialog.isOpen}
+        onClose={handleCloseDeleteDialog}
+        donationId={deleteDialog.donationId}
+        donationTitle={deleteDialog.donationTitle}
+        onDeleted={handleDonationDeleted}
+      />
     </div>
   )
 } 

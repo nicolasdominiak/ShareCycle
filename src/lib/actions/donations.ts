@@ -235,6 +235,77 @@ export async function getDonations() {
   }
 }
 
+export async function deleteDonation(id: string) {
+  try {
+    const supabase = await createClient()
+    
+    // Verificar se o usuário está autenticado
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      return {
+        success: false,
+        error: 'Usuário não autenticado'
+      }
+    }
+
+    // Verificar se a doação existe e pertence ao usuário
+    const { data: existingDonation, error: fetchError } = await supabase
+      .from('donations')
+      .select('*')
+      .eq('id', id)
+      .eq('donor_id', user.id)
+      .single()
+
+    if (fetchError || !existingDonation) {
+      return {
+        success: false,
+        error: 'Doação não encontrada ou você não tem permissão para excluí-la'
+      }
+    }
+
+    // Soft delete - marcar como inativa
+    const { error } = await supabase
+      .from('donations')
+      .update({ 
+        is_active: false,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .eq('donor_id', user.id)
+
+    if (error) {
+      console.error('Erro ao excluir doação:', {
+        error,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      })
+      return {
+        success: false,
+        error: `Erro ao excluir doação: ${error.message}`
+      }
+    }
+
+    // Revalidar cache das páginas relacionadas
+    revalidatePath('/donations')
+    revalidatePath('/donations/my-donations')
+
+    return {
+      success: true,
+      message: 'Doação excluída com sucesso'
+    }
+  } catch (error) {
+    console.error('Erro na action deleteDonation:', error)
+    
+    return {
+      success: false,
+      error: 'Erro interno do servidor'
+    }
+  }
+}
+
 export async function getUserDonations() {
   try {
     const supabase = await createClient()
@@ -250,6 +321,7 @@ export async function getUserDonations() {
       .from('donations')
       .select('*')
       .eq('donor_id', user.id)
+      .eq('is_active', true) // Só buscar doações ativas (não excluídas)
       .order('created_at', { ascending: false })
 
     if (error) {

@@ -133,7 +133,7 @@ export function Header({ user }: HeaderProps) {
                     <Link href="/profile">Perfil</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/donations/my">Minhas Doações</Link>
+                    <Link href="/donations/my-donations">Minhas Doações</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/requests/my">Minhas Solicitações</Link>

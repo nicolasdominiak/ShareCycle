@@ -2,11 +2,15 @@ import { Heart, Recycle, Users } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { MainLayout } from '@/components/layout'
 import { HomePageActions } from '@/components/features/home-page-actions'
+import { createClient } from '@/lib/supabase/server'
 
 export default async function HomePage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
   return (
-    <MainLayout showFooter={false}>
-      <div className="bg-gradient-to-br from-primary-50 via-background to-secondary-50 dark:from-primary-950 dark:via-background dark:to-secondary-950 min-h-[calc(100vh-4rem)]">
+    <MainLayout showFooter={true}>
+      <div className="min-h-[calc(100vh-4rem)]">
         <div className="container mx-auto px-4 py-16">
           <div className="text-center">
             <div className="flex justify-center mb-8">
@@ -25,7 +29,7 @@ export default async function HomePage() {
             </p>
             
                           <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto mb-12">
-                <Card className="text-center hover:shadow-lg transition-shadow bg-card border-border">
+                <Card className="text-center hover:shadow-lg transition-shadow bg-white/40 dark:bg-[#031c14]/40 border dark:border-green-800/30">
                   <CardHeader>
                     <Heart className="h-12 w-12 text-red-500 mx-auto mb-4" />
                     <CardTitle className="text-card-foreground">Para Doadores</CardTitle>
@@ -37,7 +41,7 @@ export default async function HomePage() {
                   </CardContent>
                 </Card>
                 
-                <Card className="text-center hover:shadow-lg transition-shadow bg-card border-border">
+                <Card className="text-center hover:shadow-lg transition-shadow bg-white/40 dark:bg-[#031c14]/40 border dark:border-green-800/30">
                   <CardHeader>
                     <Users className="h-12 w-12 text-blue-500 mx-auto mb-4" />
                     <CardTitle className="text-card-foreground">Para Receptores</CardTitle>
@@ -49,7 +53,7 @@ export default async function HomePage() {
                   </CardContent>
                 </Card>
                 
-                <Card className="text-center hover:shadow-lg transition-shadow bg-card border-border">
+                <Card className="text-center hover:shadow-lg transition-shadow bg-white/40 dark:bg-[#031c14]/40 border dark:border-green-800/30">
                   <CardHeader>
                     <Recycle className="h-12 w-12 text-primary mx-auto mb-4" />
                     <CardTitle className="text-card-foreground">Para o Planeta</CardTitle>
@@ -62,7 +66,7 @@ export default async function HomePage() {
                 </Card>
               </div>
             
-            <HomePageActions />
+            <HomePageActions user={user} />
           </div>
         </div>
       </div>

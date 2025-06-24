@@ -22,7 +22,7 @@ export async function MainLayout({
   const { data: { user } } = await supabase.auth.getUser()
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-primary-50 via-background to-secondary-50 dark:from-primary-950 dark:via-background dark:to-secondary-950">
       {showHeader && <Header user={user} />}
       
       <main className={`flex-1 ${className} ${showBottomNav ? 'pb-16 md:pb-0' : ''}`}>

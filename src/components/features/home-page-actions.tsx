@@ -33,7 +33,7 @@ export function HomePageActions({ user }: HomePageActionsProps) {
   // Se o usuário está logado, mostra as funcionalidades principais
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-      <Card className="hover:shadow-lg transition-shadow">
+      <Card className="hover:shadow-lg transition-shadow bg-white/40 dark:bg-[#031c14]/40 border dark:border-green-800/30">
         <CardHeader className="text-center">
           <Gift className="h-12 w-12 mx-auto text-primary" />
           <CardTitle>Fazer Doação</CardTitle>
@@ -50,7 +50,7 @@ export function HomePageActions({ user }: HomePageActionsProps) {
         </CardContent>
       </Card>
 
-      <Card className="hover:shadow-lg transition-shadow">
+      <Card className="hover:shadow-lg transition-shadow bg-white/40 dark:bg-[#031c14]/40 border dark:border-green-800/30">
         <CardHeader className="text-center">
           <Search className="h-12 w-12 mx-auto text-primary" />
           <CardTitle>Buscar Doações</CardTitle>
@@ -67,7 +67,7 @@ export function HomePageActions({ user }: HomePageActionsProps) {
         </CardContent>
       </Card>
 
-      <Card className="hover:shadow-lg transition-shadow">
+      <Card className="hover:shadow-lg transition-shadow bg-white/40 dark:bg-[#031c14]/40 border dark:border-green-800/30">
         <CardHeader className="text-center">
           <Users className="h-12 w-12 mx-auto text-primary" />
           <CardTitle>Comunidade</CardTitle>
@@ -84,7 +84,7 @@ export function HomePageActions({ user }: HomePageActionsProps) {
         </CardContent>
       </Card>
 
-      <Card className="hover:shadow-lg transition-shadow">
+      <Card className="hover:shadow-lg transition-shadow bg-white/40 dark:bg-[#031c14]/40 border dark:border-green-800/30">
         <CardHeader className="text-center">
           <Heart className="h-12 w-12 mx-auto text-primary" />
           <CardTitle>Impacto</CardTitle>

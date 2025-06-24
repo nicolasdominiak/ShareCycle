@@ -81,9 +81,9 @@ export function DonationCard({
   const categoryLabel = categoryMap[donation.category] || donation.category
 
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+    <Card className="overflow-hidden hover:shadow-md transition-shadow bg-white/40 dark:bg-[#031c14]/40 border dark:border-green-800/30">
       <CardHeader className="p-0">
-        <div className="relative h-48 w-full bg-gray-100 dark:bg-gray-800">
+        <div className="relative h-48 w-full bg-gray-100 dark:bg-green-900/20">
           {firstImage ? (
             <Image
               src={firstImage}

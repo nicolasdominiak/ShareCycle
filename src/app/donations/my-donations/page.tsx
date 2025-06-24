@@ -128,7 +128,7 @@ export default function MyDonationsPage() {
       {/* Estatísticas rápidas */}
       {donations && donations.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border">
+          <div className="bg-white/40 dark:bg-[#031c14]/40 rounded-lg p-4 border dark:border-green-800/30">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Total</p>
@@ -138,7 +138,7 @@ export default function MyDonationsPage() {
             </div>
           </div>
           
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border">
+          <div className="bg-white/40 dark:bg-[#031c14]/40 rounded-lg p-4 border dark:border-green-800/30">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Disponíveis</p>
@@ -146,13 +146,13 @@ export default function MyDonationsPage() {
                   {donations.filter(d => d.status === 'disponível').length}
                 </p>
               </div>
-              <div className="h-8 w-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-                <div className="h-3 w-3 rounded-full bg-green-500"></div>
+              <div className="h-8 w-8 rounded-full bg-green-100 dark:bg-green-800/40 flex items-center justify-center">
+                <div className="h-3 w-3 rounded-full bg-green-500 dark:bg-green-400"></div>
               </div>
             </div>
           </div>
           
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border">
+          <div className="bg-white/40 dark:bg-[#031c14]/40 rounded-lg p-4 border dark:border-green-800/30">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Reservadas</p>
@@ -160,13 +160,13 @@ export default function MyDonationsPage() {
                   {donations.filter(d => d.status === 'reservado').length}
                 </p>
               </div>
-              <div className="h-8 w-8 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center">
-                <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
+              <div className="h-8 w-8 rounded-full bg-yellow-100 dark:bg-yellow-900/50 flex items-center justify-center">
+                <div className="h-3 w-3 rounded-full bg-yellow-500 dark:bg-yellow-400"></div>
               </div>
             </div>
           </div>
           
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border">
+          <div className="bg-white/40 dark:bg-[#031c14]/40 rounded-lg p-4 border dark:border-green-800/30">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Entregues</p>
@@ -174,8 +174,8 @@ export default function MyDonationsPage() {
                   {donations.filter(d => d.status === 'entregue').length}
                 </p>
               </div>
-              <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-                <div className="h-3 w-3 rounded-full bg-blue-500"></div>
+              <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                <div className="h-3 w-3 rounded-full bg-blue-500 dark:bg-blue-400"></div>
               </div>
             </div>
           </div>

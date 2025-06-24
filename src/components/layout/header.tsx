@@ -99,7 +99,7 @@ export function Header({ user }: HeaderProps) {
               {/* Notifications */}
               <Button variant="ghost" size="sm" className="relative">
                 <Bell className="h-4 w-4" />
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs">
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center min-w-[20px]">
                   3
                 </Badge>
                 <span className="sr-only">Notificações</span>

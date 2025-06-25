@@ -4,6 +4,7 @@ import '@/styles/globals.css'
 import { Toaster } from '@/components/ui/toaster'
 import { ThemeProvider } from '@/components/theme-provider'
 import { QueryProvider } from '@/lib/providers/query-provider'
+import { GeolocationProvider } from '@/lib/providers/geolocation-provider'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const notoSans = Noto_Sans({ subsets: ['latin'], variable: '--font-noto' })
@@ -61,7 +62,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <GeolocationProvider>
+              {children}
+            </GeolocationProvider>
             <Toaster />
           </ThemeProvider>
         </QueryProvider>

@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Search, Filter, X } from 'lucide-react'
+import { Search, Filter, X, MapPin } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { useGeolocation } from '@/lib/providers/geolocation-provider'
+import { GeolocationPermissionDialog } from '@/components/ui/geolocation-permission'
 
 const categories = [
   { value: 'alimentos', label: 'Alimentos' },
@@ -24,6 +26,7 @@ const categories = [
 const orderOptions = [
   { value: 'newest', label: 'Mais recentes' },
   { value: 'oldest', label: 'Mais antigas' },
+  { value: 'distance', label: 'Mais próximas' },
   { value: 'title', label: 'Título A-Z' },
   { value: 'category', label: 'Categoria' }
 ]
@@ -35,8 +38,36 @@ export function DonationsFilters() {
   const [search, setSearch] = useState(searchParams.get('search') || '')
   const [category, setCategory] = useState(searchParams.get('category') || '')
   const [city, setCity] = useState(searchParams.get('city') || '')
-  const [orderBy, setOrderBy] = useState(searchParams.get('orderBy') || 'newest')
+  const [orderBy, setOrderBy] = useState(() => {
+    const fromUrl = searchParams.get('orderBy')
+    const nearMeFromUrl = searchParams.get('nearMe') === 'true'
+    // Se tem nearMe na URL mas não tem orderBy, usar 'distance'
+    if (nearMeFromUrl && !fromUrl) {
+      return 'distance'
+    }
+    return fromUrl || 'newest'
+  })
   const [showFilters, setShowFilters] = useState(false)
+  const [nearMe, setNearMe] = useState(searchParams.get('nearMe') === 'true')
+  const [showLocationDialog, setShowLocationDialog] = useState(false)
+
+  const geolocation = useGeolocation()
+
+  // Efeito para sincronizar nearMe com coordenadas disponíveis
+  useEffect(() => {
+    // Se nearMe está ativo na URL mas não temos coordenadas ainda
+    if (nearMe && !geolocation.latitude && geolocation.permission === 'granted') {
+      // Tenta obter localização automaticamente se permissão já foi concedida
+      geolocation.getCurrentPosition().catch((error) => {
+        console.warn('Erro ao obter localização automaticamente:', error)
+        // Se falhar, desativar o filtro nearMe
+        setNearMe(false)
+        if (orderBy === 'distance') {
+          setOrderBy('newest')
+        }
+      })
+    }
+  }, [nearMe, geolocation, orderBy])
 
   const updateURL = useCallback(() => {
     const params = new URLSearchParams()
@@ -45,12 +76,19 @@ export function DonationsFilters() {
     if (category) params.set('category', category)
     if (city.trim()) params.set('city', city.trim())
     if (orderBy !== 'newest') params.set('orderBy', orderBy)
+    
+    // Só incluir nearMe e coordenadas se tivermos localização válida
+    if (nearMe && geolocation.latitude && geolocation.longitude) {
+      params.set('nearMe', 'true')
+      params.set('lat', geolocation.latitude.toString())
+      params.set('lng', geolocation.longitude.toString())
+    }
 
     const queryString = params.toString()
     const newUrl = queryString ? `?${queryString}` : ''
     
     router.push(`/donations${newUrl}`)
-  }, [search, category, city, orderBy, router])
+  }, [search, category, city, orderBy, nearMe, geolocation.latitude, geolocation.longitude, router])
 
   // Debounce para busca
   useEffect(() => {
@@ -64,17 +102,76 @@ export function DonationsFilters() {
   // Atualizar URL imediatamente para outros filtros
   useEffect(() => {
     updateURL()
-  }, [category, city, orderBy, updateURL])
+  }, [category, city, orderBy, nearMe, updateURL])
 
   const clearFilters = () => {
     setSearch('')
     setCategory('')
     setCity('')
     setOrderBy('newest')
+    setNearMe(false)
     router.push('/donations')
   }
 
-  const hasActiveFilters = search || category || city || orderBy !== 'newest'
+  const handleNearMeToggle = async () => {
+    if (!nearMe) {
+      // Ativando filtro "perto de mim"
+      
+      // Se já temos coordenadas válidas, ativar diretamente
+      if (geolocation.latitude && geolocation.longitude) {
+        setNearMe(true)
+        setOrderBy('distance')
+        return
+      }
+      
+      // Verificar o status da permissão
+      const currentPermission = geolocation.permission || await geolocation.checkPermission()
+      
+      // Se permissão foi negada anteriormente, mostrar diálogo explicativo
+      if (currentPermission === 'denied') {
+        setShowLocationDialog(true)
+        return
+      }
+      
+      // Se já tem permissão concedida, obter localização diretamente
+      if (currentPermission === 'granted') {
+        try {
+          await geolocation.getCurrentPosition()
+          // Após obter a localização, ativar o filtro
+          setNearMe(true)
+          setOrderBy('distance')
+        } catch (error) {
+          console.error('Erro ao obter localização:', error)
+          setShowLocationDialog(true)
+        }
+        return
+      }
+      
+      // Se permissão ainda não foi determinada, mostrar nosso diálogo primeiro
+      setShowLocationDialog(true)
+      
+    } else {
+      // Desativando filtro "perto de mim"
+      setNearMe(false)
+      if (orderBy === 'distance') {
+        setOrderBy('newest')
+      }
+    }
+  }
+
+  const hasActiveFilters = search || category || city || orderBy !== 'newest' || nearMe
+
+  // Determinar o texto do botão baseado no estado
+  const getNearMeButtonText = () => {
+    if (geolocation.loading) return 'Localizando...'
+    if (nearMe && (!geolocation.latitude || !geolocation.longitude)) return 'Localizando...'
+    return 'Perto de mim'
+  }
+
+  // Determinar se o botão deve estar desabilitado
+  const isNearMeButtonDisabled = () => {
+    return geolocation.loading || (nearMe && (!geolocation.latitude || !geolocation.longitude))
+  }
 
   return (
     <div className="space-y-4">
@@ -92,6 +189,16 @@ export function DonationsFilters() {
         </div>
         
         <div className="flex gap-2">
+          <Button
+            variant={nearMe ? "default" : "outline"}
+            onClick={handleNearMeToggle}
+            className="flex items-center gap-2"
+            disabled={isNearMeButtonDisabled()}
+          >
+            <MapPin className="h-4 w-4" />
+            {getNearMeButtonText()}
+          </Button>
+          
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
@@ -180,13 +287,13 @@ export function DonationsFilters() {
       {hasActiveFilters && (
         <div className="flex flex-wrap gap-2">
           {search && (
-                         <Badge variant="secondary" className="flex items-center gap-1">
-               Busca: &ldquo;{search}&rdquo;
-               <X 
-                 className="h-3 w-3 cursor-pointer" 
-                 onClick={() => setSearch('')}
-               />
-             </Badge>
+            <Badge variant="secondary" className="flex items-center gap-1">
+              Busca: &ldquo;{search}&rdquo;
+              <X 
+                className="h-3 w-3 cursor-pointer" 
+                onClick={() => setSearch('')}
+              />
+            </Badge>
           )}
           {category && (
             <Badge variant="secondary" className="flex items-center gap-1">
@@ -206,8 +313,44 @@ export function DonationsFilters() {
               />
             </Badge>
           )}
+          {nearMe && (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              <MapPin className="h-3 w-3" />
+              Perto de mim
+              <X 
+                className="h-3 w-3 cursor-pointer" 
+                onClick={() => setNearMe(false)}
+              />
+            </Badge>
+          )}
         </div>
       )}
+
+      {/* Diálogo de permissão de geolocalização */}
+      <GeolocationPermissionDialog
+        open={showLocationDialog}
+        onOpenChange={setShowLocationDialog}
+        onPermissionGranted={async () => {
+          setShowLocationDialog(false)
+          
+          // Solicitar permissão do navegador
+          const granted = await geolocation.requestPermission()
+          
+          if (granted) {
+            try {
+              await geolocation.getCurrentPosition()
+              // Após obter a localização, ativar o filtro
+              setNearMe(true)
+              setOrderBy('distance')
+            } catch (error) {
+              console.error('Erro ao obter localização após permissão concedida:', error)
+            }
+          }
+        }}
+        onPermissionDenied={() => {
+          setShowLocationDialog(false)
+        }}
+      />
     </div>
   )
 } 

@@ -14,11 +14,21 @@ interface DonationsListProps {
     category?: string
     city?: string
     orderBy?: string
+    nearMe?: string
+    lat?: string
+    lng?: string
   }
 }
 
 export function DonationsList({ searchParams }: DonationsListProps) {
   const loadMoreRef = useRef<HTMLDivElement>(null)
+  
+  // Converter strings para numbers se existirem
+  const filters = {
+    ...searchParams,
+    userLatitude: searchParams.lat ? parseFloat(searchParams.lat) : undefined,
+    userLongitude: searchParams.lng ? parseFloat(searchParams.lng) : undefined
+  }
   
   const {
     data,
@@ -28,7 +38,7 @@ export function DonationsList({ searchParams }: DonationsListProps) {
     isLoading,
     isError,
     error
-  } = useDonations(searchParams)
+  } = useDonations(filters)
 
   // Função throttled para fetchNextPage
   const throttledFetchNextPage = useCallback(() => {

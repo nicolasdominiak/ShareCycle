@@ -66,6 +66,18 @@ export const donationSchema = z.object({
     .string()
     .max(500, "Instruções devem ter no máximo 500 caracteres")
     .optional(),
+  pickup_latitude: z
+    .number()
+    .min(-90, "Latitude deve estar entre -90 e 90")
+    .max(90, "Latitude deve estar entre -90 e 90")
+    .nullable()
+    .optional(),
+  pickup_longitude: z
+    .number()
+    .min(-180, "Longitude deve estar entre -180 e 180")
+    .max(180, "Longitude deve estar entre -180 e 180")
+    .nullable()
+    .optional(),
   expiry_date: z
     .string()
     .optional()

@@ -16,6 +16,9 @@ interface DonationsPageProps {
     category?: string
     city?: string
     orderBy?: string
+    nearMe?: string
+    lat?: string
+    lng?: string
   }>
 }
 

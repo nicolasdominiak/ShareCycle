@@ -16,12 +16,15 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  User
+  User,
+  Navigation
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 
-type DonationWithDonor = Tables<'donations_with_donor'>
+type DonationWithDonor = Tables<'donations_with_donor'> & {
+  calculated_distance?: number
+}
 
 interface DonationCardProps {
   donation: DonationWithDonor
@@ -86,6 +89,14 @@ export function DonationCard({
 
   const firstImage = donation.images?.[0]
   const categoryLabel = categoryMap[donation.category!] || donation.category
+  
+  // Função para formatar a distância
+  const formatDistance = (distance: number): string => {
+    if (distance < 1) {
+      return `${Math.round(distance * 1000)}m`
+    }
+    return `${distance.toFixed(1)}km`
+  }
 
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow bg-white/40 dark:bg-[#031c14]/40 border dark:border-green-800/30">
@@ -153,6 +164,13 @@ export function DonationCard({
               <div className="flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
                 <span>{donation.pickup_city}</span>
+              </div>
+            )}
+            
+            {donation.calculated_distance && donation.calculated_distance !== Infinity && (
+              <div className="flex items-center gap-1 text-primary dark:text-primary">
+                <Navigation className="h-3 w-3" />
+                <span>{formatDistance(donation.calculated_distance)}</span>
               </div>
             )}
           </div>

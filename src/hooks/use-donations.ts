@@ -25,6 +25,8 @@ interface UseDonationsFilters {
   category?: string
   city?: string
   orderBy?: string
+  userLatitude?: number
+  userLongitude?: number
 }
 
 // Hook para buscar todas as doações

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
-import { Loader2, ArrowLeft } from 'lucide-react'
+import { Loader2, ArrowLeft, MapPin } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { ImageUpload } from '@/components/ui/image-upload'
 import { useToast } from '@/hooks/use-toast'
+import { useGeolocation } from '@/hooks/use-geolocation'
+import { GeolocationPermissionDialog } from '@/components/ui/geolocation-permission'
+import { reverseGeocode, geocodeAddress, buildAddressString } from '@/lib/utils/geocoding'
 import { donationSchema, categoryLabels, conditionOptions, type DonationInput } from '@/lib/validations/donation'
 import { useCreateDonation, useUpdateDonation, type Donation } from '@/hooks/use-donations'
 
@@ -27,10 +30,13 @@ export function DonationForm({ donation, mode = 'create' }: DonationFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const [showLocationDialog, setShowLocationDialog] = useState(false)
+  const [isGeocodingAddress, setIsGeocodingAddress] = useState(false)
   const isEditMode = mode === 'edit'
   
   const createDonationMutation = useCreateDonation()
   const updateDonationMutation = useUpdateDonation()
+  const geolocation = useGeolocation()
 
   const form = useForm<DonationInput>({
     resolver: zodResolver(donationSchema),
@@ -48,6 +54,152 @@ export function DonationForm({ donation, mode = 'create' }: DonationFormProps) {
       expiry_date: '',
     },
   })
+
+  // Função para geocodificar endereço digitado
+  const handleGeocodeAddress = async () => {
+    const currentValues = form.getValues()
+    const addressString = buildAddressString({
+      address: currentValues.pickup_address,
+      city: currentValues.pickup_city,
+      state: currentValues.pickup_state,
+      zipCode: currentValues.pickup_zip_code
+    })
+    
+    if (!addressString || addressString.length < 5) {
+      toast({
+        title: "Endereço incompleto",
+        description: "Preencha pelo menos o endereço e a cidade para verificar a localização.",
+        variant: "destructive",
+      })
+      return
+    }
+    
+    setIsGeocodingAddress(true)
+    
+    try {
+      toast({
+        title: "Verificando localização...",
+        description: "Obtendo coordenadas do endereço informado.",
+      })
+      
+      const coordinates = await geocodeAddress(addressString)
+      
+      if (coordinates) {
+        // Mostrar feedback sobre as coordenadas encontradas
+        const addressResult = await reverseGeocode(coordinates.latitude, coordinates.longitude)
+        const resultAddress = addressResult ? buildAddressString({
+          address: addressResult.address,
+          city: addressResult.city,
+          state: addressResult.state,
+          zipCode: addressResult.zipCode
+        }) : `${coordinates.latitude.toFixed(4)}, ${coordinates.longitude.toFixed(4)}`
+        
+        toast({
+          title: "Localização encontrada!",
+          description: `Endereço localizado: ${resultAddress}`,
+        })
+      } else {
+        toast({
+          title: "Localização não encontrada",
+          description: "Não foi possível encontrar as coordenadas deste endereço. Verifique se está correto.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao geocodificar endereço:', error)
+      toast({
+        title: "Erro na verificação",
+        description: "Ocorreu um erro ao verificar a localização do endereço.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsGeocodingAddress(false)
+    }
+  }
+
+  // Função para preencher os campos de endereço com base nas coordenadas atuais
+  const fillAddressFromCoordinates = async () => {
+    if (!geolocation.latitude || !geolocation.longitude) {
+      return
+    }
+
+    try {
+      toast({
+        title: "Obtendo informações de localização...",
+        description: "Aguarde enquanto buscamos seu endereço.",
+      })
+
+      const geocodeResult = await reverseGeocode(geolocation.latitude, geolocation.longitude)
+      
+      if (geocodeResult) {
+        // Preencher apenas campos vazios
+        const currentValues = form.getValues()
+        const updates: Partial<DonationInput> = {}
+
+        if (!currentValues.pickup_address && geocodeResult.address) {
+          updates.pickup_address = geocodeResult.address
+        }
+        if (!currentValues.pickup_city && geocodeResult.city) {
+          updates.pickup_city = geocodeResult.city
+        }
+        if (!currentValues.pickup_state && geocodeResult.state) {
+          updates.pickup_state = geocodeResult.state
+        }
+        if (!currentValues.pickup_zip_code && geocodeResult.zipCode) {
+          updates.pickup_zip_code = geocodeResult.zipCode
+        }
+
+        // Aplicar as atualizações
+        Object.entries(updates).forEach(([key, value]) => {
+          form.setValue(key as keyof DonationInput, value)
+        })
+
+        toast({
+          title: "Localização preenchida!",
+          description: "Os campos de endereço foram preenchidos automaticamente.",
+        })
+      } else {
+        toast({
+          title: "Não foi possível obter o endereço",
+          description: "Tente preencher manualmente ou verifique sua localização.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao obter endereço:', error)
+      toast({
+        title: "Erro ao obter localização",
+        description: "Ocorreu um erro ao buscar as informações de endereço.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Função para preencher endereço automaticamente usando GPS
+  const handleAutoFillLocation = async () => {
+    if (!geolocation.latitude || !geolocation.longitude) {
+      // Verificar permissão atual sem solicitar
+      const currentPermission = await geolocation.checkPermission()
+      
+      if (currentPermission === 'denied') {
+        setShowLocationDialog(true)
+        return
+      }
+      
+      if (currentPermission === 'granted') {
+        await geolocation.getCurrentPosition()
+        // Após obter a localização, preencher os campos
+        await fillAddressFromCoordinates()
+      } else {
+        // Mostrar diálogo explicativo primeiro
+        setShowLocationDialog(true)
+        return
+      }
+    } else {
+      // Se já tem coordenadas, apenas preencher os campos
+      await fillAddressFromCoordinates()
+    }
+  }
 
   // Preencher o formulário com dados existentes quando em modo de edição
   useEffect(() => {
@@ -78,10 +230,18 @@ export function DonationForm({ donation, mode = 'create' }: DonationFormProps) {
     try {
       setIsLoading(true)
       
+      // As coordenadas serão obtidas automaticamente no servidor via geocodificação
+      // Mantemos apenas como fallback caso o usuário tenha fornecido via GPS
+      const submissionData = {
+        ...data,
+        pickup_latitude: geolocation.latitude || undefined,
+        pickup_longitude: geolocation.longitude || undefined
+      }
+      
       if (isEditMode && donation) {
         const result = await updateDonationMutation.mutateAsync({
           id: donation.id,
-          data
+          data: submissionData
         })
         
         if (result.success) {
@@ -98,7 +258,7 @@ export function DonationForm({ donation, mode = 'create' }: DonationFormProps) {
           })
         }
       } else {
-        const result = await createDonationMutation.mutateAsync(data)
+        const result = await createDonationMutation.mutateAsync(submissionData)
         
         if (result.success) {
           toast({
@@ -311,7 +471,33 @@ export function DonationForm({ donation, mode = 'create' }: DonationFormProps) {
 
             {/* Informações de Retirada */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Local de Retirada</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Local de Retirada</h3>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGeocodeAddress}
+                    disabled={isGeocodingAddress}
+                    className="flex items-center gap-2"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    {isGeocodingAddress ? 'Verificando...' : 'Verificar endereço'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAutoFillLocation}
+                    disabled={geolocation.loading}
+                    className="flex items-center gap-2"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    {geolocation.loading ? 'Localizando...' : 'Usar GPS'}
+                  </Button>
+                </div>
+              </div>
               
               <FormField
                 control={form.control}
@@ -414,6 +600,31 @@ export function DonationForm({ donation, mode = 'create' }: DonationFormProps) {
           </form>
         </Form>
       </CardContent>
+
+      {/* Diálogo de permissão de geolocalização */}
+      <GeolocationPermissionDialog
+        open={showLocationDialog}
+        onOpenChange={setShowLocationDialog}
+        onPermissionGranted={async () => {
+          setShowLocationDialog(false)
+          
+          // Agora sim, solicitar permissão do navegador
+          const granted = await geolocation.requestPermission()
+          
+          if (granted) {
+            try {
+              await geolocation.getCurrentPosition()
+              // Preencher os campos com as coordenadas obtidas
+              await fillAddressFromCoordinates()
+            } catch (error) {
+              console.error('Erro ao obter localização após permissão concedida:', error)
+            }
+          }
+        }}
+        onPermissionDenied={() => {
+          setShowLocationDialog(false)
+        }}
+      />
     </Card>
   )
 } 

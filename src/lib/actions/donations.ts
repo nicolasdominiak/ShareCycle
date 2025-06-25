@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { donationSchema, type DonationInput } from '@/lib/validations/donation'
+import { geocodeDonationAddress } from '@/lib/utils/geocoding'
 
 import { revalidatePath } from 'next/cache'
 
@@ -22,6 +23,30 @@ export async function createDonation(data: DonationInput) {
       }
     }
 
+    // Tentar geocodificar o endereço se não temos coordenadas
+    let latitude = validatedData.pickup_latitude
+    let longitude = validatedData.pickup_longitude
+    
+    if (!latitude || !longitude) {
+      try {
+        const coordinates = await geocodeDonationAddress({
+          pickup_address: validatedData.pickup_address,
+          pickup_city: validatedData.pickup_city,
+          pickup_state: validatedData.pickup_state,
+          pickup_zip_code: validatedData.pickup_zip_code
+        })
+        
+        if (coordinates) {
+          latitude = coordinates.latitude
+          longitude = coordinates.longitude
+          console.log('Coordenadas obtidas via geocodificação:', { latitude, longitude })
+        }
+      } catch (error) {
+        console.warn('Erro na geocodificação durante criação:', error)
+        // Não falhar a criação da doação por causa da geocodificação
+      }
+    }
+
     // Preparar dados para inserção
     const donationData = {
       title: validatedData.title,
@@ -35,6 +60,8 @@ export async function createDonation(data: DonationInput) {
       pickup_state: validatedData.pickup_state,
       pickup_zip_code: validatedData.pickup_zip_code,
       pickup_instructions: validatedData.pickup_instructions || null,
+      pickup_latitude: latitude,
+      pickup_longitude: longitude,
       expiry_date: validatedData.expiry_date || null,
       donor_id: user.id,
     }
@@ -118,6 +145,40 @@ export async function updateDonation(id: string, data: DonationInput) {
       }
     }
 
+    // Tentar geocodificar o endereço se necessário
+    let latitude = validatedData.pickup_latitude
+    let longitude = validatedData.pickup_longitude
+    
+    // Verificar se o endereço mudou e requer nova geocodificação
+    const addressChanged = (
+      existingDonation.pickup_address !== validatedData.pickup_address ||
+      existingDonation.pickup_city !== validatedData.pickup_city ||
+      existingDonation.pickup_state !== validatedData.pickup_state ||
+      existingDonation.pickup_zip_code !== validatedData.pickup_zip_code
+    )
+    
+    if (addressChanged || (!latitude || !longitude)) {
+      try {
+        const coordinates = await geocodeDonationAddress({
+          pickup_address: validatedData.pickup_address,
+          pickup_city: validatedData.pickup_city,
+          pickup_state: validatedData.pickup_state,
+          pickup_zip_code: validatedData.pickup_zip_code
+        })
+        
+        if (coordinates) {
+          latitude = coordinates.latitude
+          longitude = coordinates.longitude
+          console.log('Coordenadas atualizadas via geocodificação:', { latitude, longitude })
+        }
+      } catch (error) {
+        console.warn('Erro na geocodificação durante atualização:', error)
+        // Manter coordenadas existentes se a geocodificação falhar
+        latitude = latitude || existingDonation.pickup_latitude
+        longitude = longitude || existingDonation.pickup_longitude
+      }
+    }
+
     // Preparar dados para atualização
     const updateData = {
       title: validatedData.title,
@@ -131,6 +192,8 @@ export async function updateDonation(id: string, data: DonationInput) {
       pickup_state: validatedData.pickup_state,
       pickup_zip_code: validatedData.pickup_zip_code,
       pickup_instructions: validatedData.pickup_instructions || null,
+      pickup_latitude: latitude,
+      pickup_longitude: longitude,
       expiry_date: validatedData.expiry_date || null,
       updated_at: new Date().toISOString(),
     }
@@ -242,6 +305,8 @@ export async function getFilteredDonations(filters: {
   city?: string
   orderBy?: string
   pageParam?: number
+  userLatitude?: number
+  userLongitude?: number
 }) {
   try {
     const supabase = await createClient()
@@ -272,6 +337,17 @@ export async function getFilteredDonations(filters: {
 
     // Ordenação
     switch (filters.orderBy) {
+      case 'distance':
+        // Para ordenação por distância, precisamos fazer a query sem ordenação
+        // e ordenar no JavaScript usando cálculo de distância
+        if (filters.userLatitude && filters.userLongitude) {
+          // Não aplicar ordenação no SQL, vamos ordenar depois
+          break
+        } else {
+          // Se não tem coordenadas do usuário, ordenar por data
+          query = query.order('created_at', { ascending: false })
+          break
+        }
       case 'oldest':
         query = query.order('created_at', { ascending: true })
         break
@@ -296,12 +372,46 @@ export async function getFilteredDonations(filters: {
       throw new Error('Erro ao carregar doações')
     }
 
+    let processedDonations = donations || []
+
+    // Se ordenação por distância foi solicitada e temos coordenadas do usuário
+    if (filters.orderBy === 'distance' && filters.userLatitude && filters.userLongitude) {
+      // Função para calcular distância usando fórmula de Haversine
+      const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+        const R = 6371 // Raio da Terra em km
+        const dLat = (lat2 - lat1) * Math.PI / 180
+        const dLng = (lng2 - lng1) * Math.PI / 180
+        const a = 
+          Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+          Math.sin(dLng/2) * Math.sin(dLng/2)
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+        return R * c
+      }
+
+      // Adicionar distância a cada doação e filtrar aquelas sem coordenadas
+      processedDonations = processedDonations
+        .map(donation => {
+          if (donation.pickup_latitude && donation.pickup_longitude) {
+            const distance = calculateDistance(
+              filters.userLatitude!,
+              filters.userLongitude!,
+              donation.pickup_latitude,
+              donation.pickup_longitude
+            )
+            return { ...donation, calculated_distance: distance }
+          }
+          return { ...donation, calculated_distance: Infinity } // Sem coordenadas vai para o final
+        })
+        .sort((a, b) => a.calculated_distance - b.calculated_distance)
+    }
+
     const totalItems = count || 0
     const totalPages = Math.ceil(totalItems / PAGE_SIZE)
     const hasNextPage = (filters.pageParam || 0) < totalPages - 1
 
     return {
-      data: donations || [],
+      data: processedDonations,
       nextCursor: hasNextPage ? (filters.pageParam || 0) + 1 : undefined,
       hasNextPage,
       totalItems,

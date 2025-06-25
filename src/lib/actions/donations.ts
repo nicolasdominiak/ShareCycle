@@ -508,7 +508,7 @@ export async function getUserDonations() {
     }
 
     const { data: donations, error } = await supabase
-      .from('donations')
+      .from('donations_with_donor')
       .select('*')
       .eq('donor_id', user.id)
       .eq('is_active', true) // Só buscar doações ativas (não excluídas)

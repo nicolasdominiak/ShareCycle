@@ -9,17 +9,14 @@ const footerLinks = {
   product: [
     { title: 'Explorar Doações', href: '/donations' },
     { title: 'Criar Doação', href: '/donations/new' },
-    { title: 'Como Funciona', href: '/how-it-works' },
-    { title: 'Comunidade', href: '/community' }
+    { title: 'Como Funciona', href: '/how-it-works' }
   ],
   company: [
     { title: 'Sobre Nós', href: '/about' },
     { title: 'Nossa Missão', href: '/mission' },
-    { title: 'Impacto', href: '/impact' },
-    { title: 'Blog', href: '/blog' }
+    { title: 'Impacto', href: '/impact' }
   ],
   support: [
-    { title: 'Central de Ajuda', href: '/help' },
     { title: 'Contato', href: '/contact' },
     { title: 'Denunciar', href: '/report' },
     { title: 'FAQ', href: '/faq' }
@@ -27,8 +24,7 @@ const footerLinks = {
   legal: [
     { title: 'Termos de Uso', href: '/terms' },
     { title: 'Política de Privacidade', href: '/privacy' },
-    { title: 'Cookies', href: '/cookies' },
-    { title: 'Acessibilidade', href: '/accessibility' }
+    { title: 'Cookies', href: '/cookies' }
   ]
 }
 
@@ -63,11 +59,11 @@ export function Footer() {
               <Link href="/donations" className="text-muted-foreground hover:text-foreground">
                 Doações
               </Link>
-              <Link href="/help" className="text-muted-foreground hover:text-foreground">
-                Ajuda
-              </Link>
               <Link href="/contact" className="text-muted-foreground hover:text-foreground">
                 Contato
+              </Link>
+              <Link href="/faq" className="text-muted-foreground hover:text-foreground">
+                FAQ
               </Link>
             </div>
 

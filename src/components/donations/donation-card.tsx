@@ -139,8 +139,8 @@ export function DonationCard({
             {donation.description || 'Descrição não disponível'}
           </p>
 
-          {/* Informações do doador - apenas na visualização pública */}
-          {variant === 'public' && (
+          {/* Informações do doador - apenas na visualização pública, não mostrar nas próprias doações */}
+          {variant === 'public' && !showActions && (
             <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
               <Avatar className="h-6 w-6">
                 <AvatarImage src={donation.donor_avatar || undefined} />

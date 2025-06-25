@@ -1,14 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { Recycle, Menu, Search, Bell, User as UserIcon } from 'lucide-react'
+import { Recycle, Menu, Search, User as UserIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Badge } from '@/components/ui/badge'
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from '@/components/ui/navigation-menu'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { NotificationsCenter } from '@/components/ui/notifications-center'
 import { cn } from '@/lib/utils'
 import { User } from '@supabase/supabase-js'
 import { signOut } from '@/lib/auth/actions'
@@ -27,11 +27,6 @@ const navigationItems = [
     title: 'Doar',
     href: '/donations/new',
     description: 'Cadastre uma nova doação'
-  },
-  {
-    title: 'Comunidade',
-    href: '/community',
-    description: 'Conecte-se com outros membros'
   },
   {
     title: 'Sobre',
@@ -98,13 +93,7 @@ export function Header({ user }: HeaderProps) {
           {user ? (
             <>
               {/* Notifications */}
-              <Button variant="ghost" size="sm" className="relative">
-                <Bell className="h-4 w-4" />
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center min-w-[20px]">
-                  3
-                </Badge>
-                <span className="sr-only">Notificações</span>
-              </Button>
+              <NotificationsCenter />
 
               {/* User Menu */}
               <DropdownMenu>
@@ -131,18 +120,9 @@ export function Header({ user }: HeaderProps) {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/profile">Perfil</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
                     <Link href="/donations/my-donations">Minhas Doações</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/requests/my">Minhas Solicitações</Link>
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings">Configurações</Link>
-                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <form action={signOut}>
                       <button type="submit" className="w-full text-left">

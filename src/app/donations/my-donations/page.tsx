@@ -193,6 +193,7 @@ export default function MyDonationsPage() {
             <DonationCard
               key={donation.id}
               donation={donation}
+              variant="owner"
               showActions={true}
               onEdit={handleEdit}
               onDelete={handleDelete}

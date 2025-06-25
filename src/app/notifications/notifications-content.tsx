@@ -56,9 +56,9 @@ export function NotificationsPageContent() {
     }
   }
 
-  const handleNotificationClick = (notification: any) => {
+  const handleNotificationClick = (notification: { id: string; data: unknown }) => {
     // Redirecionar baseado no tipo de notificação
-    const data = notification.data as any
+    const data = notification.data as Record<string, unknown> | null
     if (data?.donation_id) {
       router.push(`/donations/${data.donation_id}`)
     } else if (data?.request_id) {

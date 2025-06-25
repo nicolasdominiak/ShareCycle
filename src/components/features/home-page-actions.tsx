@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { User } from '@supabase/supabase-js'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Heart, Search, Users, Gift, MapPin } from "lucide-react"
+import { Heart, Search, Gift, MapPin } from "lucide-react"
 import { useGeolocation, formatCoordinates } from '@/hooks/use-geolocation'
 
 interface HomePageActionsProps {

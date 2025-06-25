@@ -206,7 +206,7 @@ export default function TermsPage() {
               </CardHeader>
               <CardContent className="prose dark:prose-invert max-w-none space-y-4">
                 <p>
-                  O ShareCycle é fornecido "como está". Não garantimos que:
+                  O ShareCycle é fornecido &quot;como está&quot;. Não garantimos que:
                 </p>
                 <ul>
                   <li>O serviço será ininterrupto ou livre de erros</li>

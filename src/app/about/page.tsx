@@ -43,7 +43,7 @@ export default function AboutPage() {
           </CardHeader>
           <CardContent className="text-center">
             <p className="text-lg text-muted-foreground italic">
-              "Transformar o excesso em oportunidade, conectando quem tem com quem precisa, um item por vez."
+              &quot;Transformar o excesso em oportunidade, conectando quem tem com quem precisa, um item por vez.&quot;
             </p>
           </CardContent>
         </Card>

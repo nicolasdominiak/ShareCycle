@@ -90,8 +90,8 @@ export default function MissionPage() {
             </CardHeader>
             <CardContent className="text-center space-y-6">
               <p className="text-lg text-muted-foreground italic max-w-4xl mx-auto">
-                "Conectando quem tem com quem precisa, um item por vez, construindo pontes 
-                de solidariedade que fortalecem nossa sociedade e preservam nosso planeta."
+                &quot;Conectando quem tem com quem precisa, um item por vez, construindo pontes 
+                de solidariedade que fortalecem nossa sociedade e preservam nosso planeta.&quot;
               </p>
               
               <div className="grid md:grid-cols-3 gap-6 mt-8">

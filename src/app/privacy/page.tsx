@@ -272,7 +272,7 @@ export default function PrivacyPage() {
                 </p>
                 <ul>
                   <li>Notificaremos você por email ou através da plataforma</li>
-                  <li>Atualizaremos a data de "última modificação"</li>
+                  <li>Atualizaremos a data de &quot;última modificação&quot;</li>
                   <li>Daremos tempo adequado para revisão antes das mudanças entrarem em vigor</li>
                   <li>Solicitaremos novo consentimento quando necessário</li>
                 </ul>

@@ -29,7 +29,7 @@ import {
   useDeleteReadNotifications
 } from '@/hooks/use-notifications'
 import { NotificationItem, NotificationItemSkeleton } from './notification-item'
-import { Tables } from '@/types/database.types'
+
 import { cn } from '@/lib/utils'
 
 interface NotificationsCenterProps {
@@ -79,9 +79,9 @@ export function NotificationsCenter({ className }: NotificationsCenterProps) {
     }
   }
 
-  const handleNotificationClick = (notification: Tables<'notifications'>) => {
+  const handleNotificationClick = (notification: { id: string; data: unknown }) => {
     // Redirecionar baseado no tipo de notificação
-    const data = notification.data as any
+    const data = notification.data as Record<string, unknown> | null
     if (data?.donation_id) {
       router.push(`/donations/${data.donation_id}`)
     } else if (data?.request_id) {

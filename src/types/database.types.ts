@@ -502,7 +502,7 @@ export type Database = {
           p_type: Database["public"]["Enums"]["notification_type"]
           p_title: string
           p_message: string
-          p_data?: Json
+          p_data: Json
         }
         Returns: string
       }

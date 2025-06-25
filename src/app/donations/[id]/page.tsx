@@ -15,7 +15,6 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  MessageCircle,
   Shield
 } from 'lucide-react'
 
@@ -28,6 +27,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 import { createClient } from '@/lib/supabase/server'
 import { Tables } from '@/types/database.types'
+import { RequestDonationButton } from '@/components/donations/request-donation-button'
 
 type DonationWithDonor = Tables<'donations_with_donor'>
 
@@ -149,10 +149,14 @@ async function DonationDetailsContent({ id }: { id: string }) {
     notFound()
   }
 
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
   const status = donation.status || 'disponível'
   const statusInfo = statusMap[status]
   const StatusIcon = statusInfo.icon
   const categoryLabel = categoryMap[donation.category!] || donation.category
+  const isOwner = user?.id === donation.donor_id
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -329,12 +333,14 @@ async function DonationDetailsContent({ id }: { id: string }) {
             )}
 
             {/* Ações */}
-            {status === 'disponível' && (
+            {status === 'disponível' && !isOwner && user && (
               <div className="space-y-3">
-                <Button size="lg" className="w-full">
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Solicitar Doação
-                </Button>
+                <RequestDonationButton
+                  donationId={donation.id!}
+                  donationTitle={donation.title!}
+                  maxQuantity={donation.quantity || undefined}
+                  isOwner={isOwner}
+                />
                 
                 <Alert>
                   <Shield className="h-4 w-4" />
@@ -343,6 +349,51 @@ async function DonationDetailsContent({ id }: { id: string }) {
                   </AlertDescription>
                 </Alert>
               </div>
+            )}
+
+            {/* Mensagem para usuários não autenticados */}
+            {status === 'disponível' && !user && (
+              <Alert>
+                <Shield className="h-4 w-4" />
+                <AlertDescription>
+                  <Link href="/auth/login" className="text-blue-600 hover:underline">
+                    Faça login
+                  </Link> para solicitar esta doação.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Mensagem quando a doação está reservada */}
+            {status === 'reservado' && !isOwner && (
+              <Alert>
+                <Shield className="h-4 w-4" />
+                <AlertDescription>
+                  Esta doação já foi reservada para outro usuário. Continue explorando outras doações disponíveis.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Mensagem quando a doação foi entregue */}
+            {status === 'entregue' && !isOwner && (
+              <Alert>
+                <Shield className="h-4 w-4" />
+                <AlertDescription>
+                  Esta doação já foi entregue com sucesso. Obrigado por fazer parte da nossa comunidade!
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Mensagem para o próprio doador */}
+            {isOwner && (
+              <Alert>
+                <Shield className="h-4 w-4" />
+                <AlertDescription>
+                  Esta é sua doação. Gerencie suas solicitações em{' '}
+                  <Link href="/donations/my-donations" className="text-blue-600 hover:underline">
+                    Minhas Doações
+                  </Link>.
+                </AlertDescription>
+              </Alert>
             )}
           </div>
         </div>

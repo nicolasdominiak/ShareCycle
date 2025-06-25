@@ -285,6 +285,7 @@ export async function getDonations() {
       .from('donations_with_donor')
       .select('*')
       .eq('is_active', true)
+      .eq('status', 'disponível')
       .order('created_at', { ascending: false })
 
     if (error) {

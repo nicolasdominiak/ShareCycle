@@ -61,17 +61,8 @@ export default function MyDonationsPage() {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-              Minhas Doações
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
-              Gerencie suas doações cadastradas
-            </p>
-          </div>
-          
+      <div>
+        <div className="flex justify-end items-center mb-8">
           <Button asChild>
             <Link href="/donations/new" className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
@@ -99,17 +90,8 @@ export default function MyDonationsPage() {
 
   if (isError) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-              Minhas Doações
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-2">
-              Gerencie suas doações cadastradas
-            </p>
-          </div>
-          
+      <div>
+        <div className="flex justify-end items-center mb-8">
           <Button asChild>
             <Link href="/donations/new" className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
@@ -137,17 +119,8 @@ export default function MyDonationsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-            Minhas Doações
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Gerencie suas doações cadastradas
-          </p>
-        </div>
-        
+    <div>
+      <div className="flex justify-end items-center mb-8">
         <Button asChild>
           <Link href="/donations/new" className="flex items-center gap-2">
             <Plus className="h-4 w-4" />

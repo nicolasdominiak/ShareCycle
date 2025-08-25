@@ -3,7 +3,9 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ResetPasswordForm } from '@/components/forms/reset-password-form'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { ErrorAlert } from '@/components/ui/error-alert'
+import { SuccessAlert } from '@/components/ui/success-alert'
+import { getAuthError, getAuthSuccess } from '@/lib/auth/error-handling'
 
 export const metadata: Metadata = {
   title: 'Recuperar Senha | ShareCycle',
@@ -25,24 +27,36 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
     redirect('/')
   }
 
-  const getErrorMessage = (error: string) => {
-    switch (error) {
-      case 'invalid_email':
-        return 'Email inválido.'
-      case 'reset_failed':
-        return 'Erro ao enviar email de recuperação. Tente novamente.'
-      default:
-        return 'Erro ao enviar email de recuperação. Tente novamente.'
+  // Enhanced error mapping for reset password
+  const getResetPasswordError = (errorCode: string) => {
+    const errorMap: Record<string, any> = {
+      invalid_email: {
+        code: 'invalid_email',
+        message: 'Email inválido',
+        description: 'O endereço de email fornecido não é válido.',
+        recoveryInstructions: [
+          'Verifique se o email está digitado corretamente',
+          'Certifique-se de incluir @ e o domínio',
+          'Tente usar um email diferente se necessário'
+        ],
+        actionable: true,
+        severity: 'low' as const
+      },
+      reset_failed: {
+        code: 'reset_failed',
+        message: 'Erro ao enviar email',
+        description: 'Não foi possível enviar o email de recuperação.',
+        recoveryInstructions: [
+          'Verifique sua conexão com a internet',
+          'Tente novamente em alguns minutos',
+          'Certifique-se de que o email existe em nossa base'
+        ],
+        actionable: true,
+        severity: 'medium' as const
+      }
     }
-  }
-
-  const getSuccessMessage = (message: string) => {
-    switch (message) {
-      case 'check_email':
-        return 'Email de recuperação enviado! Verifique sua caixa de entrada.'
-      default:
-        return message
-    }
+    
+    return errorMap[errorCode] || getAuthError(errorCode)
   }
 
   return (
@@ -87,19 +101,16 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
           </div>
           
           {params.error && (
-            <Alert variant="destructive">
-              <AlertDescription>
-                {getErrorMessage(params.error)}
-              </AlertDescription>
-            </Alert>
+            <ErrorAlert 
+              error={getResetPasswordError(params.error)}
+              showRetryButton={params.error === 'reset_failed'}
+            />
           )}
           
           {params.message && (
-            <Alert>
-              <AlertDescription>
-                {getSuccessMessage(params.message)}
-              </AlertDescription>
-            </Alert>
+            <SuccessAlert 
+              success={params.message === 'check_email' ? getAuthSuccess('reset_email_sent') : getAuthSuccess(params.message)}
+            />
           )}
           
           <ResetPasswordForm />

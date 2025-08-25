@@ -3,7 +3,9 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { LoginForm } from '@/components/forms/login-form'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+import { ErrorAlert } from '@/components/ui/error-alert'
+import { SuccessAlert } from '@/components/ui/success-alert'
+import { getAuthError, getAuthSuccess } from '@/lib/auth/error-handling'
 
 export const metadata: Metadata = {
   title: 'Login | ShareCycle',
@@ -25,22 +27,42 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     redirect('/')
   }
 
-  const getErrorMessage = (error: string) => {
-    switch (error) {
-      case 'invalid_credentials':
-        return 'Email ou senha incorretos. Tente novamente.'
-      default:
-        return 'Erro ao fazer login. Tente novamente.'
+  // Enhanced error and success mapping for login
+  const getLoginError = (errorCode: string) => {
+    const errorMap: Record<string, any> = {
+      invalid_credentials: {
+        code: 'invalid_credentials',
+        message: 'Credenciais inválidas',
+        description: 'Email ou senha incorretos.',
+        recoveryInstructions: [
+          'Verifique se o email está digitado corretamente',
+          'Certifique-se de que a senha está correta',
+          'Tente recuperar sua senha se necessário'
+        ],
+        actionable: true,
+        severity: 'low' as const
+      }
     }
+    
+    return errorMap[errorCode] || getAuthError(errorCode)
   }
 
-  const getSuccessMessage = (message: string) => {
-    switch (message) {
-      case 'check_email':
-        return 'Conta criada com sucesso! Verifique seu email para confirmar.'
-      default:
-        return message
+  const getLoginSuccess = (messageCode: string) => {
+    const successMap: Record<string, any> = {
+      check_email: {
+        code: 'check_email',
+        message: 'Conta criada com sucesso!',
+        description: 'Verifique seu email para confirmar sua conta antes de fazer login.',
+        nextSteps: [
+          'Abra seu email e procure por nossa mensagem',
+          'Clique no link de confirmação',
+          'Retorne aqui para fazer login'
+        ]
+      },
+      password_updated: getAuthSuccess('password_updated')
     }
+    
+    return successMap[messageCode] || getAuthSuccess(messageCode)
   }
 
   return (
@@ -56,19 +78,17 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </div>
         
         {params.error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertDescription>
-              {getErrorMessage(params.error)}
-            </AlertDescription>
-          </Alert>
+          <ErrorAlert 
+            error={getLoginError(params.error)}
+            className="mb-6"
+          />
         )}
         
         {params.message && (
-          <Alert className="mb-6">
-            <AlertDescription>
-              {getSuccessMessage(params.message)}
-            </AlertDescription>
-          </Alert>
+          <SuccessAlert 
+            success={getLoginSuccess(params.message)}
+            className="mb-6"
+          />
         )}
         
         <LoginForm />
